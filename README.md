@@ -22,3 +22,9 @@ A cross-platform PowerShell (pwsh) automation tool built on Ubuntu Linux. This u
 4. Execute the script:
    ```bash
    ./Run-Validation.psh
+
+ ## 🗺️ Roadmap
+- [ ] **Parallel Processing:** Implement `ForEach-Object -Parallel` to scan hundreds of endpoints simultaneously.
+- [ ] **Certificate Expiry Tracking:** Extract SSL expiration dates to proactively alert on renewals.
+- [ ] **Notification Layer:** Integrate Webhooks to send failed connection alerts to Slack or Discord.
+- [ ] **Security+ Compliance:** Add automated checks for deprecated ciphers (like Triple DES or RC4).
