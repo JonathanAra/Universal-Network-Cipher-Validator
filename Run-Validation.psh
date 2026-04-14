@@ -1,0 +1,64 @@
+#!/usr/bin/env pwsh
+
+Import-Module "./NetworkFunctions.psm1" -Force
+
+$inputPath  = "./Endpoints.csv"
+$outputPath = "./ValidationResults.csv"
+
+$endpoints = Import-Csv -Path $inputPath
+
+Write-Host "Starting Security & Cipher Audit..." -ForegroundColor Yellow
+
+$results = foreach ($item in $endpoints) {
+    Write-Host "Probing: $($item.Hostname)" -ForegroundColor Gray
+    
+    $res = [PSCustomObject]@{
+        Hostname         = $item.Hostname
+        Port             = $item.Port
+        PortOpen         = $false
+        SSLValid         = "N/A"
+        Timestamp        = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        ErrorMessage     = ""
+        NegotiatedCipher = "N/A"
+        KeyExchange      = "N/A"
+    }
+
+    try {
+        $tcpClient = New-Object System.Net.Sockets.TcpClient
+        $connect = $tcpClient.BeginConnect($item.Hostname, $item.Port, $null, $null)
+        $wait = $connect.AsyncWaitHandle.WaitOne(2000, $false)
+
+        if ($wait -and $tcpClient.Connected) {
+            $res.PortOpen = $true
+            
+            # --- BRANCH LOGIC START ---
+            if ($item.Port -eq 22) {
+                # For Port 22, we ONLY do the SSH Cipher check
+                $cipherData = Get-SSHNegotiatedCipher -Hostname $item.Hostname -Port $item.Port
+                $res.NegotiatedCipher = $cipherData.Cipher
+                $res.KeyExchange = $cipherData.Kex
+                $res.SSLValid = "N/A (SSH)"
+            } 
+            elseif ($item.Port -eq 443) {
+                # For Port 443, we do the standard SSL check
+                $stream = $tcpClient.GetStream()
+                $sslStream = New-Object System.Net.Security.SslStream($stream, $false)
+                $sslStream.AuthenticateAsClient($item.Hostname)
+                $res.SSLValid = $sslStream.IsAuthenticated
+                $sslStream.Close()
+            }
+            # --- BRANCH LOGIC END ---
+
+        } else {
+            $res.ErrorMessage = "Connection timed out"
+        }
+        $tcpClient.Close()
+    }
+    catch {
+        $res.ErrorMessage = $_.Exception.Message
+    }
+    $res
+}
+
+$results | Export-Csv -Path $outputPath -NoTypeInformation
+Write-Host "Audit Complete." -ForegroundColor Green

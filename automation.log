@@ -1,0 +1,8 @@
+--- Validation Session Started: 04/12/2026 20:59:59 ---
+Skipping google.com: Already Validated
+Checked 1.1.1.1 - PortOpen: True, SSLValid: False
+Checked example.com - PortOpen: True, SSLValid: False
+--- Validation Session Started: 04/12/2026 21:03:12 ---
+Skipping google.com: Already Validated
+Checked 1.1.1.1 - PortOpen: True, SSLValid: False
+Checked example.com - PortOpen: True, SSLValid: False
